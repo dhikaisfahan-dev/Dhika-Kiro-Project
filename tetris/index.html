@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Modern Web Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+        <div class="container">
+            <h1 class="game-title">TETRIS</h1>
+            <div class="name-entry">
+                <label for="playerName">Player Name:</label>
+                <input type="text" id="playerName" maxlength="20" placeholder="Enter your name">
+            </div>
+            <div class="difficulty-selection">
+                <h3>Select Difficulty:</h3>
+                <div class="button-group">
+                    <button class="btn-difficulty" data-difficulty="easy">Easy</button>
+                    <button class="btn-difficulty active" data-difficulty="medium">Medium</button>
+                    <button class="btn-difficulty" data-difficulty="hard">Hard</button>
+                </div>
+            </div>
+            <div class="mode-selection">
+                <h3>Select Game Mode:</h3>
+                <div class="button-group">
+                    <button class="btn-mode active" data-mode="marathon">Marathon</button>
+                    <button class="btn-mode" data-mode="sprint">Sprint</button>
+                    <button class="btn-mode" data-mode="ultra">Ultra</button>
+                </div>
+            </div>
+            <button id="startButton" class="btn-primary">Start Game</button>
+            <button id="resumeButton" class="btn-secondary" style="display:none;">Resume Game</button>
+            <button id="viewLeaderboardButton" class="btn-secondary">Leaderboard</button>
+            <button id="viewAchievementsButton" class="btn-secondary">Achievements</button>
+            <button id="settingsButton" class="btn-secondary">Settings</button>
+            <div class="controls-info">
+                <h4>Controls:</h4>
+                <p>← → : Move | ↓ : Soft Drop | ↑ : Rotate CW | Z : Rotate CCW</p>
+                <p>Space : Hard Drop | C : Hold | P/Esc : Pause</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-container">
+            <div class="game-info left-panel">
+                <div class="info-section">
+                    <h3>Hold</h3>
+                    <canvas id="holdCanvas" width="120" height="120"></canvas>
+                </div>
+                <div class="info-section">
+                    <h3>Score</h3>
+                    <p id="scoreDisplay" class="stat-value">0</p>
+                </div>
+                <div class="info-section">
+                    <h3>Level</h3>
+                    <p id="levelDisplay" class="stat-value">1</p>
+                </div>
+                <div class="info-section">
+                    <h3>Lines</h3>
+                    <p id="linesDisplay" class="stat-value">0</p>
+                </div>
+                <div class="info-section" id="timerSection" style="display:none;">
+                    <h3>Time</h3>
+                    <p id="timerDisplay" class="stat-value">0:00</p>
+                </div>
+            </div>
+            
+            <div class="game-board">
+                <canvas id="gameCanvas" width="300" height="600"></canvas>
+                <button id="pauseButton" class="btn-pause">Pause</button>
+            </div>
+            
+            <div class="game-info right-panel">
+                <div class="info-section">
+                    <h3>Next</h3>
+                    <canvas id="nextCanvas" width="120" height="120"></canvas>
+                </div>
+                <div class="info-section">
+                    <h3>Combo</h3>
+                    <p id="comboDisplay" class="stat-value">0</p>
+                </div>
+                <div class="info-section" id="powerupsSection">
+                    <h3>Power-ups</h3>
+                    <div id="activePowerups"></div>
+                </div>
+                <div class="info-section" id="challenge-indicator" style="display:none;">
+                    <!-- Challenge info will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pauseOverlay" class="overlay">
+        <div class="overlay-content">
+            <h2>PAUSED</h2>
+            <button id="resumeGameButton" class="btn-primary">Resume</button>
+            <button id="quitButton" class="btn-secondary">Quit to Menu</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+        <div class="container">
+            <h1>GAME OVER</h1>
+            <div class="final-stats">
+                <h3>Final Score: <span id="finalScore">0</span></h3>
+                <p id="modeInfo"></p>
+            </div>
+            <div class="leaderboard-container">
+                <h3>Top 5 Scores</h3>
+                <div id="gameOverLeaderboard"></div>
+            </div>
+            <div class="share-section">
+                <button id="shareScoreButton" class="btn-secondary">Share Score</button>
+            </div>
+            <button id="playAgainButton" class="btn-primary">Play Again</button>
+            <button id="backToMenuButton" class="btn-secondary">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboardScreen" class="screen">
+        <div class="container">
+            <h2>LEADERBOARD</h2>
+            <div id="leaderboardList"></div>
+            <button id="closeLeaderboardButton" class="btn-secondary">Back</button>
+        </div>
+    </div>
+
+    <!-- Achievements Screen -->
+    <div id="achievementsScreen" class="screen">
+        <div class="container">
+            <h2>ACHIEVEMENTS</h2>
+            <div id="achievementsList"></div>
+            <button id="closeAchievementsButton" class="btn-secondary">Back</button>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settingsScreen" class="screen">
+        <div class="container">
+            <h2>SETTINGS</h2>
+            <div class="settings-section">
+                <h3>Theme</h3>
+                <div class="button-group">
+                    <button class="btn-theme" data-theme="classic">Classic</button>
+                    <button class="btn-theme" data-theme="neon">Neon</button>
+                    <button class="btn-theme" data-theme="ocean">Ocean</button>
+                    <button class="btn-theme" data-theme="sunset">Sunset</button>
+                    <button class="btn-theme" data-theme="dark">Dark</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <label>
+                    <input type="checkbox" id="muteToggle"> Mute
+                </label>
+                <label>
+                    Volume: <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                </label>
+            </div>
+            <button id="closeSettingsButton" class="btn-secondary">Back</button>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Scripts -->
+    <script src="storage.js"></script>
+    <script src="audio.js"></script>
+    <script src="theme.js"></script>
+    <script src="renderer.js"></script>
+    <script src="game.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>

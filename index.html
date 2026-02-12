@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple Flappy Bird game built with vanilla JavaScript">
+    <title>Flappy Bird</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Canvas for game rendering -->
+        <canvas id="gameCanvas" data-testid="game-canvas"></canvas>
+        
+        <!-- Start Screen Overlay -->
+        <div id="startScreen" class="screen-overlay" data-testid="start-screen">
+            <h1>Flappy Bird</h1>
+            <p class="instructions">Click or press SPACE to start</p>
+            <button id="startButton" class="game-button" data-testid="start-button">Start Game</button>
+        </div>
+        
+        <!-- Game Over Screen Overlay -->
+        <div id="gameOverScreen" class="screen-overlay hidden" data-testid="game-over-screen">
+            <h1>Game Over</h1>
+            <p class="final-score">Score: <span id="finalScore" data-testid="final-score">0</span></p>
+            <button id="restartButton" class="game-button" data-testid="restart-button">Restart</button>
+        </div>
+        
+        <!-- Score Display -->
+        <div id="scoreDisplay" class="score-display hidden" data-testid="score-display">
+            <span id="currentScore">0</span>
+        </div>
+    </div>
+    
+    <!-- Background Music -->
+    <audio id="backgroundMusic" loop>
+        <source src="assets/music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    
+    <script src="game.js"></script>
+</body>
+</html>
