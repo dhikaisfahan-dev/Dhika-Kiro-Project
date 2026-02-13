@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Check</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            background: #000;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+        .warning { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>Browser Extension Check</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = message;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        log('=== DIAGNOSTIC TEST ===', 'info');
+        log('', 'info');
+        
+        // Check for common script blockers
+        log('Checking for script blockers...', 'info');
+        
+        // Check if console methods are being intercepted
+        const originalLog = console.log;
+        if (console.log !== originalLog) {
+            log('⚠ console.log has been modified', 'warning');
+        }
+        
+        // Check for Content Security Policy
+        const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        if (meta) {
+            log(`⚠ CSP detected: ${meta.content}`, 'warning');
+        } else {
+            log('✓ No CSP meta tag', 'success');
+        }
+        
+        log('', 'info');
+        log('Loading game.js with full error tracking...', 'info');
+        
+        // Track all errors
+        const errors = [];
+        window.addEventListener('error', function(e) {
+            const msg = `ERROR: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`;
+            errors.push(msg);
+            log(msg, 'error');
+        });
+        
+        // Load game.js
+        const cacheBuster = Date.now() + Math.random();
+        const script = document.createElement('script');
+        script.src = `./game.js?unique=${cacheBuster}`;
+        
+        script.onload = function() {
+            log('✓ game.js file loaded (HTTP 200)', 'success');
+            
+            setTimeout(() => {
+                log('', 'info');
+                log('=== CHECKING EXPORTS ===', 'info');
+                
+                // Check each export individually
+                const checks = [
+                    ['window.gameJsLoaded', window.gameJsLoaded],
+                    ['window.gameState', typeof window.gameState],
+                    ['window.initializeGame', typeof window.initializeGame],
+                    ['window.startNewGame', typeof window.startNewGame],
+                    ['window.resumeSavedGame', typeof window.resumeSavedGame],
+                    ['window.gameLoop', typeof window.gameLoop]
+                ];
+                
+                let allGood = true;
+                checks.forEach(([name, value]) => {
+                    const expected = name === 'window.gameJsLoaded' ? true : 'function';
+                    const actual = name === 'window.gameJsLoaded' ? value : value;
+                    const isGood = name === 'window.gameJsLoaded' ? value === true : value === 'function';
+                    
+                    log(`${name}: ${actual}`, isGood ? 'success' : 'error');
+                    if (!isGood) allGood = false;
+                });
+                
+                log('', 'info');
+                if (allGood) {
+                    log('✓✓✓ ALL EXPORTS WORKING! ✓✓✓', 'success');
+                    log('', 'info');
+                    log('game.js is working perfectly!', 'success');
+                    log('The problem must be with index.html specifically', 'warning');
+                } else {
+                    log('✗✗✗ EXPORTS MISSING ✗✗✗', 'error');
+                    log('', 'info');
+                    if (errors.length > 0) {
+                        log('Errors detected:', 'error');
+                        errors.forEach(err => log(`  ${err}`, 'error'));
+                    } else {
+                        log('No JavaScript errors detected', 'warning');
+                        log('game.js loaded but did not execute', 'error');
+                        log('Possible causes:', 'info');
+                        log('  1. Browser extension blocking execution', 'info');
+                        log('  2. Content Security Policy', 'info');
+                        log('  3. Silent JavaScript error', 'info');
+                    }
+                }
+            }, 1000);
+        };
+        
+        script.onerror = function() {
+            log('✗ Failed to load game.js (404 or network error)', 'error');
+        };
+        
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

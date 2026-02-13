@@ -475,6 +475,7 @@ window.storageSystem = {
     // Achievements
     saveAchievement: saveAchievement,
     loadAchievements: loadAchievements,
+    getAchievements: loadAchievements, // Alias for compatibility
     isAchievementUnlocked: isAchievementUnlocked,
     getAchievementProgress: getAchievementProgress,
     clearAchievements: clearAchievements,

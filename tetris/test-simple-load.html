@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Simple Load Test</title>
+</head>
+<body>
+    <h1>Tetris Simple Load Test</h1>
+    <div id="status">Loading...</div>
+    <button id="testButton" style="display:none;">Test Start Game</button>
+    
+    <script>
+        console.log('=== SIMPLE LOAD TEST START ===');
+        
+        // Load scripts in order
+        const scripts = [
+            './storage.js',
+            './audio.js',
+            './theme.js',
+            './renderer.js',
+            './game.js',
+            './ui.js'
+        ];
+        
+        let loadedCount = 0;
+        
+        function loadNextScript() {
+            if (loadedCount >= scripts.length) {
+                console.log('=== ALL SCRIPTS LOADED ===');
+                document.getElementById('status').textContent = 'All scripts loaded! Check console.';
+                document.getElementById('testButton').style.display = 'block';
+                return;
+            }
+            
+            const scriptPath = scripts[loadedCount];
+            console.log(`Loading script ${loadedCount + 1}/${scripts.length}: ${scriptPath}`);
+            
+            const script = document.createElement('script');
+            script.src = scriptPath;
+            script.onload = () => {
+                console.log(`✓ Loaded: ${scriptPath}`);
+                loadedCount++;
+                loadNextScript();
+            };
+            script.onerror = () => {
+                console.error(`✗ Failed to load: ${scriptPath}`);
+                document.getElementById('status').textContent = `Failed to load: ${scriptPath}`;
+            };
+            document.head.appendChild(script);
+        }
+        
+        loadNextScript();
+        
+        // Test button
+        document.getElementById('testButton').addEventListener('click', () => {
+            console.log('=== TESTING startNewGame ===');
+            console.log('window.startNewGame type:', typeof window.startNewGame);
+            
+            if (typeof window.startNewGame === 'function') {
+                console.log('Calling startNewGame...');
+                const result = window.startNewGame('TestPlayer', 'medium', 'marathon');
+                console.log('startNewGame result:', result);
+            } else {
+                console.error('startNewGame is not a function!');
+            }
+        });
+    </script>
+</body>
+</html>

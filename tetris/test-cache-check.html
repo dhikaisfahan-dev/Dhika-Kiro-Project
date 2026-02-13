@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Check</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            background: #000;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+    </style>
+</head>
+<body>
+    <h1>Cache Check</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = message;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        log('Checking for service workers...', 'info');
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                if (registrations.length > 0) {
+                    log(`✗ Found ${registrations.length} service worker(s) - this could be caching files!`, 'error');
+                    registrations.forEach((reg, i) => {
+                        log(`  SW ${i+1}: ${reg.scope}`, 'error');
+                    });
+                    log('Try unregistering service workers:', 'info');
+                    log('  1. Open DevTools (F12)', 'info');
+                    log('  2. Go to Application tab', 'info');
+                    log('  3. Click Service Workers', 'info');
+                    log('  4. Click Unregister for each worker', 'info');
+                } else {
+                    log('✓ No service workers found', 'success');
+                }
+            });
+        } else {
+            log('✓ Service workers not supported', 'success');
+        }
+        
+        log('', 'info');
+        log('Loading game.js with unique cache buster...', 'info');
+        
+        const uniqueBuster = Date.now() + Math.random();
+        const script = document.createElement('script');
+        script.src = `./game.js?nocache=${uniqueBuster}`;
+        
+        script.onload = function() {
+            setTimeout(() => {
+                log('--- Results ---', 'info');
+                log(`window.gameJsLoaded: ${window.gameJsLoaded}`, window.gameJsLoaded ? 'success' : 'error');
+                log(`window.startNewGame: ${typeof window.startNewGame}`, typeof window.startNewGame === 'function' ? 'success' : 'error');
+                
+                if (window.gameJsLoaded) {
+                    log('✓ game.js is working correctly!', 'success');
+                    log('', 'info');
+                    log('The issue is browser cache on index.html', 'error');
+                    log('Solution: Clear browser cache completely:', 'info');
+                    log('  Chrome: Cmd+Shift+Delete → Clear browsing data', 'info');
+                    log('  Safari: Develop → Empty Caches (or Cmd+Option+E)', 'info');
+                } else {
+                    log('✗ game.js still not working', 'error');
+                }
+            }, 500);
+        };
+        
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

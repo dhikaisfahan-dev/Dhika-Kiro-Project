@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Game Load</title>
+</head>
+<body>
+    <h1>Testing game.js Load</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        output.innerHTML = '<p>About to load game.js...</p>';
+        
+        // Check if lastFrameTime exists BEFORE loading
+        if (typeof lastFrameTime !== 'undefined') {
+            output.innerHTML += '<p style="color:red;">ERROR: lastFrameTime already exists BEFORE loading game.js!</p>';
+        } else {
+            output.innerHTML += '<p style="color:green;">Good: lastFrameTime does not exist yet</p>';
+        }
+    </script>
+    
+    <!-- Load ONLY game.js -->
+    <script src="./game.js"></script>
+    
+    <script>
+        // Check after loading
+        if (typeof lastFrameTime !== 'undefined') {
+            output.innerHTML += '<p style="color:green;">Success: lastFrameTime now exists after loading game.js</p>';
+            output.innerHTML += '<p>Value: ' + lastFrameTime + '</p>';
+        } else {
+            output.innerHTML += '<p style="color:red;">ERROR: lastFrameTime still does not exist after loading game.js!</p>';
+        }
+        
+        // Check if window.startGame exists
+        if (typeof window.startGame === 'function') {
+            output.innerHTML += '<p style="color:green;">Success: window.startGame function exists</p>';
+        } else {
+            output.innerHTML += '<p style="color:red;">ERROR: window.startGame function does not exist!</p>';
+        }
+    </script>
+</body>
+</html>

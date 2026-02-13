@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test game.js Syntax</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            background: #000;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+    </style>
+</head>
+<body>
+    <h1>game.js Syntax Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toISOString()}] ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        // Capture all console errors
+        window.addEventListener('error', function(e) {
+            log(`✗ ERROR: ${e.message}`, 'error');
+            log(`  File: ${e.filename}`, 'error');
+            log(`  Line: ${e.lineno}:${e.colno}`, 'error');
+            log(`  Stack: ${e.error ? e.error.stack : 'N/A'}`, 'error');
+        });
+        
+        log('Loading game.js with error tracking...', 'info');
+        
+        const script = document.createElement('script');
+        script.src = `./game.js?t=${Date.now()}`;
+        
+        script.onload = function() {
+            log('✓ game.js file loaded (no 404)', 'success');
+            
+            setTimeout(() => {
+                log('--- Checking exports after 1 second ---', 'info');
+                log(`window.gameJsLoaded: ${window.gameJsLoaded}`, window.gameJsLoaded ? 'success' : 'error');
+                log(`window.startNewGame: ${typeof window.startNewGame}`, typeof window.startNewGame === 'function' ? 'success' : 'error');
+                
+                if (!window.gameJsLoaded) {
+                    log('✗ game.js loaded but did NOT execute!', 'error');
+                    log('This means there is a JavaScript error in game.js', 'error');
+                    log('Check the browser console (F12) for the actual error', 'error');
+                }
+            }, 1000);
+        };
+        
+        script.onerror = function() {
+            log('✗ Failed to load game.js (404 or network error)', 'error');
+        };
+        
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

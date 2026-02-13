@@ -11,38 +11,57 @@ let ctx = null;
 let scale = 1;
 
 function initializeCanvas() {
-    canvas = document.getElementById('game-canvas');
+    console.log('[renderer.js] initializeCanvas called');
+    canvas = document.getElementById('gameCanvas');
     if (!canvas) {
-        console.error('Canvas element not found');
+        console.error('[renderer.js] Canvas element not found');
         return false;
     }
+    console.log('[renderer.js] Canvas found:', canvas);
     
     ctx = canvas.getContext('2d');
     if (!ctx) {
-        console.error('Failed to get 2D context');
+        console.error('[renderer.js] Failed to get 2D context');
         return false;
     }
+    console.log('[renderer.js] Canvas context obtained');
     
     // Set canvas size
     resizeCanvas();
+    console.log('[renderer.js] Canvas resized to:', canvas.width, 'x', canvas.height);
     
     // Add resize listener
     window.addEventListener('resize', resizeCanvas);
     
+    console.log('[renderer.js] Canvas initialization complete');
     return true;
 }
 
 function resizeCanvas() {
     if (!canvas) return;
     
-    // Calculate optimal size based on container
+    console.log('[renderer.js] resizeCanvas called');
+    
+    // Get container dimensions
     const container = canvas.parentElement;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     
-    // Calculate scale to fit board
-    const boardPixelWidth = BOARD_WIDTH * BLOCK_SIZE;
-    const boardPixelHeight = BOARD_HEIGHT * BLOCK_SIZE;
+    console.log('[renderer.js] Container dimensions:', containerWidth, 'x', containerHeight);
+    
+    // If container has no size, use fixed dimensions
+    if (containerWidth === 0 || containerHeight === 0) {
+        console.warn('[renderer.js] Container has no size, using fixed dimensions');
+        canvas.width = 300;
+        canvas.height = 600;
+        scale = 1;
+        console.log('[renderer.js] Canvas resized to:', canvas.width, 'x', canvas.height);
+        return;
+    }
+    
+    // Calculate optimal size based on container
+    const boardPixelWidth = window.BOARD_WIDTH * window.BLOCK_SIZE;
+    const boardPixelHeight = window.BOARD_HEIGHT * window.BLOCK_SIZE;
     
     const scaleX = containerWidth / boardPixelWidth;
     const scaleY = containerHeight / boardPixelHeight;
@@ -53,8 +72,12 @@ function resizeCanvas() {
     canvas.width = boardPixelWidth * scale;
     canvas.height = boardPixelHeight * scale;
     
+    console.log('[renderer.js] Canvas resized to:', canvas.width, 'x', canvas.height);
+    
     // Apply scaling to context
-    ctx.scale(scale, scale);
+    if (ctx) {
+        ctx.scale(scale, scale);
+    }
 }
 
 // ============================================================================
@@ -84,29 +107,29 @@ function renderBoard() {
     
     // Clear canvas
     ctx.fillStyle = colors.background;
-    ctx.fillRect(0, 0, BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
+    ctx.fillRect(0, 0, window.BOARD_WIDTH * window.BLOCK_SIZE, window.BOARD_HEIGHT * window.BLOCK_SIZE);
     
     // Draw grid
     ctx.strokeStyle = colors.grid;
     ctx.lineWidth = 1;
     
-    for (let y = 0; y <= BOARD_HEIGHT; y++) {
+    for (let y = 0; y <= window.BOARD_HEIGHT; y++) {
         ctx.beginPath();
-        ctx.moveTo(0, y * BLOCK_SIZE);
-        ctx.lineTo(BOARD_WIDTH * BLOCK_SIZE, y * BLOCK_SIZE);
+        ctx.moveTo(0, y * window.BLOCK_SIZE);
+        ctx.lineTo(window.BOARD_WIDTH * window.BLOCK_SIZE, y * window.BLOCK_SIZE);
         ctx.stroke();
     }
     
-    for (let x = 0; x <= BOARD_WIDTH; x++) {
+    for (let x = 0; x <= window.BOARD_WIDTH; x++) {
         ctx.beginPath();
-        ctx.moveTo(x * BLOCK_SIZE, 0);
-        ctx.lineTo(x * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
+        ctx.moveTo(x * window.BLOCK_SIZE, 0);
+        ctx.lineTo(x * window.BLOCK_SIZE, window.BOARD_HEIGHT * window.BLOCK_SIZE);
         ctx.stroke();
     }
     
     // Render placed pieces
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
-        for (let x = 0; x < BOARD_WIDTH; x++) {
+    for (let y = 0; y < window.BOARD_HEIGHT; y++) {
+        for (let x = 0; x < window.BOARD_WIDTH; x++) {
             if (gameState.board[y][x]) {
                 renderBlock(x, y, gameState.board[y][x]);
             }
@@ -121,13 +144,13 @@ function renderBoard() {
 function renderBlock(x, y, color, alpha = 1.0) {
     if (!ctx) return;
     
-    const pixelX = x * BLOCK_SIZE;
-    const pixelY = y * BLOCK_SIZE;
+    const pixelX = x * window.BLOCK_SIZE;
+    const pixelY = y * window.BLOCK_SIZE;
     
     // Draw block with gradient
     const gradient = ctx.createLinearGradient(
         pixelX, pixelY,
-        pixelX + BLOCK_SIZE, pixelY + BLOCK_SIZE
+        pixelX + window.BLOCK_SIZE, pixelY + window.BLOCK_SIZE
     );
     
     // Adjust color alpha
@@ -141,15 +164,15 @@ function renderBlock(x, y, color, alpha = 1.0) {
     
     // Fill block
     ctx.fillStyle = gradient;
-    ctx.fillRect(pixelX + 1, pixelY + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+    ctx.fillRect(pixelX + 1, pixelY + 1, window.BLOCK_SIZE - 2, window.BLOCK_SIZE - 2);
     
     // Add highlight
     ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * alpha})`;
-    ctx.fillRect(pixelX + 2, pixelY + 2, BLOCK_SIZE - 4, 3);
+    ctx.fillRect(pixelX + 2, pixelY + 2, window.BLOCK_SIZE - 4, 3);
     
     // Add shadow
     ctx.fillStyle = `rgba(0, 0, 0, ${0.3 * alpha})`;
-    ctx.fillRect(pixelX + 2, pixelY + BLOCK_SIZE - 5, BLOCK_SIZE - 4, 3);
+    ctx.fillRect(pixelX + 2, pixelY + window.BLOCK_SIZE - 5, window.BLOCK_SIZE - 4, 3);
 }
 
 // ============================================================================
@@ -392,15 +415,15 @@ function renderLineClearAnimations() {
     if (!ctx) return;
     
     for (const anim of animations.lineClear) {
-        const y = anim.y * BLOCK_SIZE;
+        const y = anim.y * window.BLOCK_SIZE;
         
         if (anim.phase === 'flash') {
             // White flash
             ctx.fillStyle = `rgba(255, 255, 255, ${anim.alpha * 0.8})`;
-            ctx.fillRect(0, y, BOARD_WIDTH * BLOCK_SIZE, BLOCK_SIZE);
+            ctx.fillRect(0, y, window.BOARD_WIDTH * window.BLOCK_SIZE, window.BLOCK_SIZE);
         } else if (anim.phase === 'fadeout') {
             // Fade out the line
-            for (let x = 0; x < BOARD_WIDTH; x++) {
+            for (let x = 0; x < window.BOARD_WIDTH; x++) {
                 if (gameState.board[anim.y] && gameState.board[anim.y][x]) {
                     renderBlock(x, anim.y, gameState.board[anim.y][x], anim.alpha);
                 }
@@ -444,8 +467,8 @@ class Particle {
 }
 
 function createParticles(x, y, color, count = 20) {
-    const centerX = x * BLOCK_SIZE + BLOCK_SIZE / 2;
-    const centerY = y * BLOCK_SIZE + BLOCK_SIZE / 2;
+    const centerX = x * window.BLOCK_SIZE + window.BLOCK_SIZE / 2;
+    const centerY = y * window.BLOCK_SIZE + window.BLOCK_SIZE / 2;
     
     for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count;
@@ -468,7 +491,7 @@ function createParticles(x, y, color, count = 20) {
 function createTetrisParticles(lines) {
     // Create particles for Tetris clear (4 lines)
     for (const lineY of lines) {
-        for (let x = 0; x < BOARD_WIDTH; x++) {
+        for (let x = 0; x < window.BOARD_WIDTH; x++) {
             if (gameState.board[lineY] && gameState.board[lineY][x]) {
                 createParticles(x, lineY, gameState.board[lineY][x], 10);
             }
@@ -486,8 +509,8 @@ function createTSpinParticles(x, y) {
         const color = colors[Math.floor(Math.random() * colors.length)];
         
         const particle = new Particle(
-            x * BLOCK_SIZE + BLOCK_SIZE / 2,
-            y * BLOCK_SIZE + BLOCK_SIZE / 2,
+            x * window.BLOCK_SIZE + window.BLOCK_SIZE / 2,
+            y * window.BLOCK_SIZE + window.BLOCK_SIZE / 2,
             color,
             {
                 x: Math.cos(angle) * speed,
@@ -506,8 +529,8 @@ function createPowerUpParticles(x, y, color) {
         const speed = Math.random() * 5 + 2;
         
         const particle = new Particle(
-            x * BLOCK_SIZE + BLOCK_SIZE / 2,
-            y * BLOCK_SIZE + BLOCK_SIZE / 2,
+            x * window.BLOCK_SIZE + window.BLOCK_SIZE / 2,
+            y * window.BLOCK_SIZE + window.BLOCK_SIZE / 2,
             color,
             {
                 x: Math.cos(angle) * speed,
@@ -524,8 +547,8 @@ function createAchievementParticles() {
     const colors = ['#FFD700', '#FFA500', '#FF6347'];
     
     for (let i = 0; i < 50; i++) {
-        const x = Math.random() * BOARD_WIDTH * BLOCK_SIZE;
-        const y = Math.random() * BOARD_HEIGHT * BLOCK_SIZE;
+        const x = Math.random() * window.BOARD_WIDTH * window.BLOCK_SIZE;
+        const y = Math.random() * window.BOARD_HEIGHT * window.BLOCK_SIZE;
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 3 + 1;
         const color = colors[Math.floor(Math.random() * colors.length)];
@@ -621,7 +644,7 @@ function renderPlacementFlash() {
     if (!ctx || !animations.flash.active) return;
     
     ctx.fillStyle = `rgba(255, 255, 255, ${animations.flash.alpha})`;
-    ctx.fillRect(0, 0, BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
+    ctx.fillRect(0, 0, window.BOARD_WIDTH * window.BLOCK_SIZE, window.BOARD_HEIGHT * window.BLOCK_SIZE);
 }
 
 // ============================================================================
@@ -640,8 +663,8 @@ function renderComboFeedback() {
     
     // Combo text with glow effect
     const text = `${gameState.combo}x COMBO!`;
-    const x = (BOARD_WIDTH * BLOCK_SIZE) / 2;
-    const y = BLOCK_SIZE * 2;
+    const x = (window.BOARD_WIDTH * window.BLOCK_SIZE) / 2;
+    const y = window.BLOCK_SIZE * 2;
     
     // Glow
     ctx.shadowColor = '#FFD700';
@@ -666,7 +689,7 @@ function renderPowerUpIndicators() {
     
     ctx.save();
     
-    let yOffset = BLOCK_SIZE;
+    let yOffset = window.BLOCK_SIZE;
     
     for (const powerUp of gameState.activePowerUps) {
         // Render power-up icon/text
@@ -686,7 +709,7 @@ function renderPowerUpIndicators() {
                 text = `⚡ ${powerUp.type}`;
         }
         
-        ctx.fillText(text, BLOCK_SIZE / 2, yOffset);
+        ctx.fillText(text, window.BLOCK_SIZE / 2, yOffset);
         yOffset += 20;
     }
     
@@ -732,7 +755,7 @@ function applyThemeEffects() {
 // PERFORMANCE OPTIMIZATION
 // ============================================================================
 
-let lastFrameTime = 0;
+let rendererLastFrameTime = 0;
 let fps = 60;
 let frameCount = 0;
 let fpsUpdateTime = 0;
@@ -754,7 +777,7 @@ function renderFPS() {
     ctx.font = '12px monospace';
     ctx.fillStyle = '#00FF00';
     ctx.textAlign = 'right';
-    ctx.fillText(`FPS: ${fps}`, BOARD_WIDTH * BLOCK_SIZE - 5, 15);
+    ctx.fillText(`FPS: ${fps}`, window.BOARD_WIDTH * window.BLOCK_SIZE - 5, 15);
     ctx.restore();
 }
 
@@ -766,8 +789,8 @@ function renderWithEffects(currentTime = 0) {
     if (!ctx) return;
     
     // Calculate delta time
-    const deltaTime = currentTime - lastFrameTime;
-    lastFrameTime = currentTime;
+    const deltaTime = currentTime - rendererLastFrameTime;
+    rendererLastFrameTime = currentTime;
     
     // Update FPS counter
     updateFPS(currentTime);
@@ -836,7 +859,7 @@ function updateTheme(pieceColors) {
     themePieceColors = pieceColors;
     
     // Re-render if game is active
-    if (gameState && gameState.isPlaying) {
+    if (window.gameState && window.gameState.isPlaying) {
         render();
     }
 }

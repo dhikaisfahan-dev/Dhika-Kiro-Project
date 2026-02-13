@@ -7,12 +7,13 @@
 // ============================================================================
 
 const SCREENS = {
-    START: 'start-screen',
-    GAME: 'game-screen',
-    PAUSE: 'pause-overlay',
-    GAME_OVER: 'game-over-screen',
-    SETTINGS: 'settings-menu',
-    ACHIEVEMENTS: 'achievements-page'
+    START: 'startScreen',
+    GAME: 'gameScreen',
+    PAUSE: 'pauseOverlay',
+    GAME_OVER: 'gameOverScreen',
+    SETTINGS: 'settingsScreen',
+    ACHIEVEMENTS: 'achievementsScreen',
+    LEADERBOARD: 'leaderboardScreen'
 };
 
 let currentScreen = SCREENS.START;
@@ -34,6 +35,9 @@ function showScreen(screenId) {
     }
 }
 
+// Expose showScreen to window for game.js to use
+window.showScreen = showScreen;
+
 // ============================================================================
 // START SCREEN CONTROLLER
 // ============================================================================
@@ -41,39 +45,56 @@ function showScreen(screenId) {
 function initializeStartScreen() {
     // Load player name from storage
     const playerName = window.storageSystem.getPlayerName();
-    const nameInput = document.getElementById('player-name-input');
+    const nameInput = document.getElementById('playerName');
     if (nameInput) {
         nameInput.value = playerName;
     }
     
-    // Load last selected difficulty
-    const difficulty = window.storageSystem.getDifficulty();
-    const difficultySelect = document.getElementById('difficulty-select');
-    if (difficultySelect) {
-        difficultySelect.value = difficulty;
-    }
+    // Setup difficulty buttons
+    const difficultyButtons = document.querySelectorAll('.btn-difficulty');
+    const savedDifficulty = window.storageSystem.getDifficulty();
+    difficultyButtons.forEach(btn => {
+        if (btn.dataset.difficulty === savedDifficulty) {
+            btn.classList.add('active');
+        }
+        btn.addEventListener('click', () => {
+            difficultyButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
     
-    // Load last selected mode
-    const mode = window.storageSystem.getLastMode();
-    const modeSelect = document.getElementById('mode-select');
-    if (modeSelect) {
-        modeSelect.value = mode;
-    }
+    // Setup mode buttons
+    const modeButtons = document.querySelectorAll('.btn-mode');
+    const savedMode = window.storageSystem.getLastMode();
+    modeButtons.forEach(btn => {
+        if (btn.dataset.mode === savedMode) {
+            btn.classList.add('active');
+        }
+        btn.addEventListener('click', () => {
+            modeButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
     
     // Setup event listeners
-    const startButton = document.getElementById('start-game-btn');
+    const startButton = document.getElementById('startButton');
     if (startButton) {
         startButton.addEventListener('click', handleStartGame);
     }
     
-    const settingsButton = document.getElementById('settings-btn');
+    const settingsButton = document.getElementById('settingsButton');
     if (settingsButton) {
-        settingsButton.addEventListener('click', () => showScreen(SCREENS.SETTINGS));
+        settingsButton.addEventListener('click', () => showScreen('settingsScreen'));
     }
     
-    const achievementsButton = document.getElementById('achievements-btn');
+    const achievementsButton = document.getElementById('viewAchievementsButton');
     if (achievementsButton) {
-        achievementsButton.addEventListener('click', () => showScreen(SCREENS.ACHIEVEMENTS));
+        achievementsButton.addEventListener('click', () => showScreen('achievementsScreen'));
+    }
+    
+    const leaderboardButton = document.getElementById('viewLeaderboardButton');
+    if (leaderboardButton) {
+        leaderboardButton.addEventListener('click', () => showScreen('leaderboardScreen'));
     }
     
     // Check for saved game
@@ -83,7 +104,7 @@ function initializeStartScreen() {
 }
 
 function showContinueGameOption() {
-    const continueButton = document.getElementById('continue-game-btn');
+    const continueButton = document.getElementById('resumeButton');
     if (continueButton) {
         continueButton.style.display = 'block';
         continueButton.addEventListener('click', handleContinueGame);
@@ -92,7 +113,7 @@ function showContinueGameOption() {
 
 function handleStartGame() {
     // Get player name
-    const nameInput = document.getElementById('player-name-input');
+    const nameInput = document.getElementById('playerName');
     const playerName = nameInput ? nameInput.value.trim() : 'Player';
     
     if (!playerName) {
@@ -103,18 +124,43 @@ function handleStartGame() {
     // Save player name
     window.storageSystem.savePlayerName(playerName);
     
-    // Get difficulty
-    const difficultySelect = document.getElementById('difficulty-select');
-    const difficulty = difficultySelect ? difficultySelect.value : 'medium';
+    // Get difficulty from active button
+    const activeDifficultyBtn = document.querySelector('.btn-difficulty.active');
+    const difficulty = activeDifficultyBtn ? activeDifficultyBtn.dataset.difficulty : 'medium';
     window.storageSystem.saveDifficulty(difficulty);
     
-    // Get mode
-    const modeSelect = document.getElementById('mode-select');
-    const mode = modeSelect ? modeSelect.value : 'marathon';
+    // Get mode from active button
+    const activeModeBtn = document.querySelector('.btn-mode.active');
+    const mode = activeModeBtn ? activeModeBtn.dataset.mode : 'marathon';
     window.storageSystem.saveLastMode(mode);
     
-    // Start new game
-    startNewGame(playerName, difficulty, mode);
+    // Wait for game.js to be fully loaded before calling startNewGame
+    let retryCount = 0;
+    const maxRetries = 50; // 5 seconds max wait
+    
+    function tryStartGame() {
+        console.log(`[Attempt ${retryCount + 1}] Checking game.js status...`);
+        console.log('  window.gameJsLoaded:', window.gameJsLoaded);
+        console.log('  window.startNewGame type:', typeof window.startNewGame);
+        
+        if (window.gameJsLoaded && typeof window.startNewGame === 'function') {
+            console.log('✓ game.js ready! Starting game...');
+            const success = window.startNewGame(playerName, difficulty, mode);
+            if (!success) {
+                console.error('✗ Game failed to start');
+                alert('Failed to start game. Please try again.');
+            }
+        } else if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`  Waiting for game.js... (retry ${retryCount}/${maxRetries})`);
+            setTimeout(tryStartGame, 100);
+        } else {
+            console.error('✗ Timeout waiting for game.js to load');
+            alert('Game initialization timeout. Please refresh the page and try again.');
+        }
+    }
+    
+    tryStartGame();
 }
 
 function handleContinueGame() {
@@ -132,7 +178,7 @@ function handleContinueGame() {
 
 function initializeGameScreen() {
     // Setup pause button
-    const pauseButton = document.getElementById('pause-btn');
+    const pauseButton = document.getElementById('pauseButton');
     if (pauseButton) {
         pauseButton.addEventListener('click', handlePauseGame);
     }
@@ -140,9 +186,9 @@ function initializeGameScreen() {
     // Setup keyboard listener for pause
     document.addEventListener('keydown', (e) => {
         if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
-            if (currentScreen === SCREENS.GAME) {
+            if (currentScreen === 'gameScreen') {
                 handlePauseGame();
-            } else if (currentScreen === SCREENS.PAUSE) {
+            } else if (currentScreen === 'pauseOverlay') {
                 handleResumeGame();
             }
         }
@@ -151,37 +197,37 @@ function initializeGameScreen() {
 
 function updateGameUI() {
     // Update score
-    const scoreElement = document.getElementById('score-value');
-    if (scoreElement && gameState) {
-        scoreElement.textContent = gameState.score.toLocaleString();
+    const scoreElement = document.getElementById('scoreDisplay');
+    if (scoreElement && window.gameState) {
+        scoreElement.textContent = window.gameState.score.toLocaleString();
     }
     
     // Update level
-    const levelElement = document.getElementById('level-value');
-    if (levelElement && gameState) {
-        levelElement.textContent = gameState.level;
+    const levelElement = document.getElementById('levelDisplay');
+    if (levelElement && window.gameState) {
+        levelElement.textContent = window.gameState.level;
     }
     
     // Update lines
-    const linesElement = document.getElementById('lines-value');
-    if (linesElement && gameState) {
-        linesElement.textContent = gameState.lines;
+    const linesElement = document.getElementById('linesDisplay');
+    if (linesElement && window.gameState) {
+        linesElement.textContent = window.gameState.lines;
     }
     
     // Update timer (for Sprint and Ultra modes)
-    if (gameState && (gameState.mode === 'sprint' || gameState.mode === 'ultra')) {
+    if (window.gameState && (window.gameState.mode === 'sprint' || window.gameState.mode === 'ultra')) {
         updateTimerDisplay();
     }
     
     // Update combo display
-    if (gameState && gameState.combo > 1) {
-        const comboElement = document.getElementById('combo-value');
+    if (window.gameState && window.gameState.combo > 1) {
+        const comboElement = document.getElementById('comboDisplay');
         if (comboElement) {
-            comboElement.textContent = `${gameState.combo}x`;
+            comboElement.textContent = `${window.gameState.combo}x`;
             comboElement.style.display = 'block';
         }
     } else {
-        const comboElement = document.getElementById('combo-value');
+        const comboElement = document.getElementById('comboDisplay');
         if (comboElement) {
             comboElement.style.display = 'none';
         }
@@ -189,17 +235,17 @@ function updateGameUI() {
 }
 
 function updateTimerDisplay() {
-    const timerElement = document.getElementById('timer-value');
-    if (!timerElement || !gameState) return;
+    const timerElement = document.getElementById('timerDisplay');
+    if (!timerElement || !window.gameState) return;
     
     let timeValue;
     
-    if (gameState.mode === 'sprint') {
+    if (window.gameState.mode === 'sprint') {
         // Show elapsed time
-        timeValue = gameState.gameTime;
-    } else if (gameState.mode === 'ultra') {
+        timeValue = window.gameState.gameTime;
+    } else if (window.gameState.mode === 'ultra') {
         // Show remaining time (3 minutes = 180000ms)
-        timeValue = Math.max(0, 180000 - gameState.gameTime);
+        timeValue = Math.max(0, 180000 - window.gameState.gameTime);
     }
     
     // Format as MM:SS
@@ -227,19 +273,14 @@ function handlePauseGame() {
 // ============================================================================
 
 function initializePauseOverlay() {
-    const resumeButton = document.getElementById('resume-btn');
+    const resumeButton = document.getElementById('resumeGameButton');
     if (resumeButton) {
         resumeButton.addEventListener('click', handleResumeGame);
     }
     
-    const quitButton = document.getElementById('quit-btn');
+    const quitButton = document.getElementById('quitButton');
     if (quitButton) {
         quitButton.addEventListener('click', handleQuitGame);
-    }
-    
-    const pauseSettingsButton = document.getElementById('pause-settings-btn');
-    if (pauseSettingsButton) {
-        pauseSettingsButton.addEventListener('click', () => showScreen(SCREENS.SETTINGS));
     }
 }
 
@@ -258,8 +299,8 @@ function handleResumeGame() {
 function handleQuitGame() {
     if (confirm('Are you sure you want to quit? Your progress will be saved.')) {
         // Save game state
-        if (gameState && typeof window.storageSystem !== 'undefined') {
-            window.storageSystem.saveGameState(gameState);
+        if (window.gameState && typeof window.storageSystem !== 'undefined') {
+            window.storageSystem.saveGameState(window.gameState);
         }
         
         // Stop game
@@ -282,17 +323,17 @@ function handleQuitGame() {
 // ============================================================================
 
 function initializeGameOverScreen() {
-    const playAgainButton = document.getElementById('play-again-btn');
+    const playAgainButton = document.getElementById('playAgainButton');
     if (playAgainButton) {
         playAgainButton.addEventListener('click', handlePlayAgain);
     }
     
-    const mainMenuButton = document.getElementById('main-menu-btn');
+    const mainMenuButton = document.getElementById('backToMenuButton');
     if (mainMenuButton) {
         mainMenuButton.addEventListener('click', () => showScreen(SCREENS.START));
     }
     
-    const shareScoreButton = document.getElementById('share-score-btn');
+    const shareScoreButton = document.getElementById('shareScoreButton');
     if (shareScoreButton) {
         shareScoreButton.addEventListener('click', handleShareScore);
     }
@@ -300,19 +341,17 @@ function initializeGameOverScreen() {
 
 function showGameOver(finalScore, lines, level, mode, difficulty) {
     // Display final stats
-    const finalScoreElement = document.getElementById('final-score');
+    const finalScoreElement = document.getElementById('finalScore');
     if (finalScoreElement) {
         finalScoreElement.textContent = finalScore.toLocaleString();
     }
     
-    const finalLinesElement = document.getElementById('final-lines');
-    if (finalLinesElement) {
-        finalLinesElement.textContent = lines;
-    }
-    
-    const finalLevelElement = document.getElementById('final-level');
-    if (finalLevelElement) {
-        finalLevelElement.textContent = level;
+    // Display mode info
+    const modeInfoElement = document.getElementById('modeInfo');
+    if (modeInfoElement) {
+        const modeText = mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : 'Marathon';
+        const difficultyText = difficulty ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 'Medium';
+        modeInfoElement.textContent = `${modeText} Mode - ${difficultyText} - Level ${level} - ${lines} Lines`;
     }
     
     // Save high score
@@ -326,30 +365,16 @@ function showGameOver(finalScore, lines, level, mode, difficulty) {
         level
     );
     
-    // Show rank if made it to top 5
-    if (result.rank) {
-        const rankElement = document.getElementById('score-rank');
-        if (rankElement) {
-            rankElement.textContent = `Rank #${result.rank}`;
-            rankElement.style.display = 'block';
-            
-            if (result.isTopScore) {
-                rankElement.textContent = '🏆 NEW HIGH SCORE! 🏆';
-                rankElement.classList.add('top-score');
-            }
-        }
-    }
-    
     // Update leaderboard display
-    updateLeaderboardDisplay();
+    updateGameOverLeaderboard();
     
     // Update statistics
-    if (gameState) {
+    if (window.gameState) {
         window.storageSystem.updateStats({
             score: finalScore,
             lines: lines,
             mode: mode,
-            gameTime: gameState.gameTime
+            gameTime: window.gameState.gameTime
         });
     }
     
@@ -365,37 +390,39 @@ function showGameOver(finalScore, lines, level, mode, difficulty) {
     }
 }
 
-function updateLeaderboardDisplay() {
-    const leaderboardElement = document.getElementById('leaderboard-list');
+function updateGameOverLeaderboard() {
+    const leaderboardElement = document.getElementById('gameOverLeaderboard');
     if (!leaderboardElement) return;
     
-    const scores = window.storageSystem.loadHighScores();
+    const scores = window.storageSystem.loadHighScores().slice(0, 5); // Top 5 only
     
     leaderboardElement.innerHTML = '';
     
     if (scores.length === 0) {
-        leaderboardElement.innerHTML = '<li class="no-scores">No high scores yet</li>';
+        leaderboardElement.innerHTML = '<div class="no-scores">No high scores yet</div>';
         return;
     }
     
     scores.forEach((score, index) => {
-        const li = document.createElement('li');
-        li.className = 'leaderboard-entry';
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
         
         // Highlight current player's score
         const currentPlayer = window.storageSystem.getPlayerName();
         if (score.playerName === currentPlayer) {
-            li.classList.add('current-player');
+            entry.classList.add('current-player');
         }
         
-        li.innerHTML = `
-            <span class="rank">#${index + 1}</span>
+        const modeText = score.mode ? score.mode.charAt(0).toUpperCase() + score.mode.slice(1) : 'Marathon';
+        
+        entry.innerHTML = `
+            <span class="rank">${index === 0 ? '🏆' : `#${index + 1}`}</span>
             <span class="player-name">${score.playerName}</span>
             <span class="score">${score.score.toLocaleString()}</span>
-            <span class="mode">${score.mode}</span>
+            <span class="mode">${modeText}</span>
         `;
         
-        leaderboardElement.appendChild(li);
+        leaderboardElement.appendChild(entry);
     });
 }
 
@@ -405,15 +432,23 @@ function handlePlayAgain() {
     const mode = window.storageSystem.getLastMode();
     const playerName = window.storageSystem.getPlayerName();
     
-    // Start new game with same settings
-    startNewGame(playerName, difficulty, mode);
+    // Simple direct call
+    console.log('Play Again - Starting game with:', { playerName, difficulty, mode });
+    console.log('window.startNewGame type:', typeof window.startNewGame);
+    
+    if (typeof window.startNewGame === 'function') {
+        window.startNewGame(playerName, difficulty, mode);
+    } else {
+        console.error('ERROR: window.startNewGame is not available');
+        alert('Game failed to load. Please refresh the page (Ctrl+Shift+R or Cmd+Shift+R) and try again.');
+    }
 }
 
 function handleShareScore() {
-    if (!gameState) return;
+    if (!window.gameState) return;
     
     const playerName = window.storageSystem.getPlayerName();
-    const shareText = `I scored ${gameState.score.toLocaleString()} points in Tetris (${gameState.mode} mode)! Can you beat my score?`;
+    const shareText = `I scored ${window.gameState.score.toLocaleString()} points in Tetris (${window.gameState.mode} mode)! Can you beat my score?`;
     
     // Try to use Web Share API
     if (navigator.share) {
@@ -525,67 +560,59 @@ function initializeSettingsMenu() {
     // Load current settings
     loadSettingsUI();
     
-    // Setup theme selector
-    const themeSelect = document.getElementById('theme-select');
-    if (themeSelect) {
-        themeSelect.addEventListener('change', handleThemeChange);
-    }
+    // Setup theme buttons
+    const themeButtons = document.querySelectorAll('.btn-theme');
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            themeButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            handleThemeChange(btn.dataset.theme);
+        });
+    });
     
     // Setup audio controls
-    const muteToggle = document.getElementById('mute-toggle');
+    const muteToggle = document.getElementById('muteToggle');
     if (muteToggle) {
         muteToggle.addEventListener('change', handleMuteToggle);
     }
     
-    const volumeSlider = document.getElementById('volume-slider');
+    const volumeSlider = document.getElementById('volumeSlider');
     if (volumeSlider) {
         volumeSlider.addEventListener('input', handleVolumeChange);
     }
     
     // Setup close button
-    const closeSettingsButton = document.getElementById('close-settings-btn');
+    const closeSettingsButton = document.getElementById('closeSettingsButton');
     if (closeSettingsButton) {
         closeSettingsButton.addEventListener('click', handleCloseSettings);
-    }
-    
-    // Setup back button (from pause menu)
-    const backFromSettingsButton = document.getElementById('back-from-settings-btn');
-    if (backFromSettingsButton) {
-        backFromSettingsButton.addEventListener('click', () => {
-            if (gameState && gameState.isPlaying) {
-                showScreen(SCREENS.PAUSE);
-            } else {
-                showScreen(SCREENS.START);
-            }
-        });
     }
 }
 
 function loadSettingsUI() {
     // Load theme
     const currentTheme = window.storageSystem ? window.storageSystem.getTheme() : 'classic';
-    const themeSelect = document.getElementById('theme-select');
-    if (themeSelect) {
-        themeSelect.value = currentTheme;
-    }
+    const themeButtons = document.querySelectorAll('.btn-theme');
+    themeButtons.forEach(btn => {
+        if (btn.dataset.theme === currentTheme) {
+            btn.classList.add('active');
+        }
+    });
     
     // Load audio settings
     if (window.audioSystem) {
-        const muteToggle = document.getElementById('mute-toggle');
+        const muteToggle = document.getElementById('muteToggle');
         if (muteToggle) {
-            muteToggle.checked = !window.audioSystem.isMuted();
+            muteToggle.checked = !window.audioSystem.getMuteState();
         }
         
-        const volumeSlider = document.getElementById('volume-slider');
+        const volumeSlider = document.getElementById('volumeSlider');
         if (volumeSlider) {
             volumeSlider.value = window.audioSystem.getVolume() * 100;
         }
     }
 }
 
-function handleThemeChange(event) {
-    const newTheme = event.target.value;
-    
+function handleThemeChange(newTheme) {
     // Apply theme
     if (typeof applyTheme === 'function') {
         applyTheme(newTheme);
@@ -621,7 +648,7 @@ function handleVolumeChange(event) {
 
 function handleCloseSettings() {
     // Return to appropriate screen
-    if (gameState && gameState.isPlaying) {
+    if (window.gameState && window.gameState.isPlaying) {
         showScreen(SCREENS.PAUSE);
     } else {
         showScreen(SCREENS.START);
@@ -632,7 +659,7 @@ function handleCloseSettings() {
 // ACHIEVEMENTS PAGE CONTROLLER
 // ============================================================================
 
-const ACHIEVEMENTS = {
+const UI_ACHIEVEMENTS = {
     firstTetris: {
         id: 'firstTetris',
         name: 'First Tetris',
@@ -686,7 +713,7 @@ const ACHIEVEMENTS = {
 
 function initializeAchievementsPage() {
     // Setup back button
-    const backButton = document.getElementById('back-from-achievements-btn');
+    const backButton = document.getElementById('closeAchievementsButton');
     if (backButton) {
         backButton.addEventListener('click', () => showScreen(SCREENS.START));
     }
@@ -696,16 +723,16 @@ function initializeAchievementsPage() {
 }
 
 function renderAchievements() {
-    const achievementsContainer = document.getElementById('achievements-container');
+    const achievementsContainer = document.getElementById('achievementsList');
     if (!achievementsContainer) return;
     
     // Load unlocked achievements
-    const unlockedAchievements = window.storageSystem ? window.storageSystem.getAchievements() : [];
+    const unlockedAchievements = window.storageSystem ? window.storageSystem.loadAchievements() : [];
     
     achievementsContainer.innerHTML = '';
     
-    for (const key in ACHIEVEMENTS) {
-        const achievement = ACHIEVEMENTS[key];
+    for (const key in UI_ACHIEVEMENTS) {
+        const achievement = UI_ACHIEVEMENTS[key];
         const isUnlocked = unlockedAchievements.includes(achievement.id);
         
         const achievementCard = document.createElement('div');
@@ -725,13 +752,13 @@ function renderAchievements() {
 }
 
 function checkAchievements() {
-    if (!gameState || !window.storageSystem) return;
+    if (!window.gameState || !window.storageSystem) return;
     
-    const progress = gameState.achievementsProgress;
-    const unlockedAchievements = window.storageSystem.getAchievements();
+    const progress = window.gameState.achievementsProgress;
+    const unlockedAchievements = window.storageSystem.loadAchievements();
     
-    for (const key in ACHIEVEMENTS) {
-        const achievement = ACHIEVEMENTS[key];
+    for (const key in UI_ACHIEVEMENTS) {
+        const achievement = UI_ACHIEVEMENTS[key];
         
         // Skip if already unlocked
         if (unlockedAchievements.includes(achievement.id)) {
@@ -754,7 +781,13 @@ function checkAchievements() {
 // ============================================================================
 
 function initializeLeaderboard() {
-    // Setup filter buttons
+    // Setup close button
+    const closeButton = document.getElementById('closeLeaderboardButton');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => showScreen(SCREENS.START));
+    }
+    
+    // Setup filter buttons if they exist
     const filterButtons = document.querySelectorAll('.leaderboard-filter-btn');
     filterButtons.forEach(button => {
         button.addEventListener('click', handleLeaderboardFilter);
@@ -778,7 +811,7 @@ function handleLeaderboardFilter(event) {
 }
 
 function renderLeaderboard(filter = 'all') {
-    const leaderboardElement = document.getElementById('leaderboard-list');
+    const leaderboardElement = document.getElementById('leaderboardList');
     if (!leaderboardElement) return;
     
     let scores = window.storageSystem ? window.storageSystem.loadHighScores() : [];
@@ -791,7 +824,7 @@ function renderLeaderboard(filter = 'all') {
     leaderboardElement.innerHTML = '';
     
     if (scores.length === 0) {
-        leaderboardElement.innerHTML = '<li class="no-scores">No high scores yet</li>';
+        leaderboardElement.innerHTML = '<div class="no-scores">No high scores yet</div>';
         return;
     }
     
@@ -799,24 +832,24 @@ function renderLeaderboard(filter = 'all') {
     const bestScore = scores.length > 0 ? scores[0].score : 0;
     
     scores.forEach((score, index) => {
-        const li = document.createElement('li');
-        li.className = 'leaderboard-entry';
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
         
         // Highlight current player's score
         if (score.playerName === currentPlayer) {
-            li.classList.add('current-player');
+            entry.classList.add('current-player');
         }
         
         // Highlight best score
         if (score.score === bestScore) {
-            li.classList.add('best-score');
+            entry.classList.add('best-score');
         }
         
         // Format mode and difficulty
         const modeText = score.mode ? score.mode.charAt(0).toUpperCase() + score.mode.slice(1) : 'Marathon';
         const difficultyText = score.difficulty ? score.difficulty.charAt(0).toUpperCase() + score.difficulty.slice(1) : 'Medium';
         
-        li.innerHTML = `
+        entry.innerHTML = `
             <span class="rank">${index === 0 ? '🏆' : `#${index + 1}`}</span>
             <span class="player-name">${score.playerName}</span>
             <span class="score">${score.score.toLocaleString()}</span>
@@ -824,7 +857,7 @@ function renderLeaderboard(filter = 'all') {
             <span class="lines">${score.lines || 0} lines</span>
         `;
         
-        leaderboardElement.appendChild(li);
+        leaderboardElement.appendChild(entry);
     });
 }
 
@@ -884,7 +917,7 @@ function initializeMultiplayer() {
     
     if (friendScore) {
         // Display challenge notification
-        displayNotification(
+        window.displayNotification(
             `Challenge from ${friendScore.playerName}: Beat ${friendScore.score.toLocaleString()} points!`,
             'challenge',
             5000
@@ -939,14 +972,14 @@ function updateChallengeComparison() {
 
 // Handle share score button click
 function handleShareScore() {
-    if (!gameState) return;
+    if (!window.gameState) return;
     
-    const score = gameState.score;
+    const score = window.gameState.score;
     const playerName = window.storageSystem.getPlayerName();
-    const mode = gameState.mode;
-    const difficulty = gameState.difficulty;
-    const lines = gameState.lines;
-    const level = gameState.level;
+    const mode = window.gameState.mode;
+    const difficulty = window.gameState.difficulty;
+    const lines = window.gameState.lines;
+    const level = window.gameState.level;
     
     // Show share options modal
     showShareModal(score, playerName, mode, difficulty, lines, level);
@@ -1102,7 +1135,7 @@ function updateGameUIWithChallenge() {
     updateGameUI();
     
     // Update challenge comparison if active
-    if (gameState && gameState.friendScore) {
+    if (window.gameState && window.gameState.friendScore) {
         updateChallengeComparison();
     }
 }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Game.js Exports</title>
+</head>
+<body>
+    <h1>Game.js Export Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Log everything to the page
+        const results = document.getElementById('results');
+        
+        function log(message, isError = false) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.color = isError ? 'red' : 'black';
+            results.appendChild(p);
+            console.log(message);
+        }
+
+        log('=== BEFORE loading game.js ===');
+        log('window.gameJsLoaded: ' + window.gameJsLoaded);
+        log('window.startNewGame: ' + typeof window.startNewGame);
+        log('window.gameState: ' + typeof window.gameState);
+    </script>
+
+    <!-- Load game.js -->
+    <script src="game.js"></script>
+
+    <script>
+        log('=== AFTER loading game.js ===');
+        log('window.gameJsLoaded: ' + window.gameJsLoaded);
+        log('window.startNewGame: ' + typeof window.startNewGame);
+        log('window.gameState: ' + typeof window.gameState);
+        log('window.initializeGame: ' + typeof window.initializeGame);
+        
+        if (window.gameJsLoaded) {
+            log('✓ game.js loaded successfully!', false);
+        } else {
+            log('✗ game.js did NOT set gameJsLoaded flag!', true);
+        }
+        
+        if (typeof window.startNewGame === 'function') {
+            log('✓ startNewGame function is available!', false);
+        } else {
+            log('✗ startNewGame function is NOT available!', true);
+        }
+        
+        // Check if there were any errors during game.js execution
+        window.addEventListener('error', function(e) {
+            log('ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno, true);
+        });
+    </script>
+</body>
+</html>

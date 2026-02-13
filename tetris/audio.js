@@ -356,6 +356,7 @@ function cleanupAudio() {
 
 window.audioSystem = {
     initialize: initializeAudio,
+    init: initializeAudio, // Alias for compatibility
     resumeContext: resumeAudioContext,
     
     // Music controls
@@ -376,11 +377,15 @@ window.audioSystem = {
     
     // Volume controls
     setMasterVolume: setMasterVolume,
+    setVolume: setMasterVolume, // Alias for compatibility
     setMusicVolume: setMusicVolume,
     setSFXVolume: setSFXVolume,
     toggleMute: toggleMute,
+    mute: () => { isMuted = true; stopMusic(); saveAudioPreferences(); }, // Alias for compatibility
+    unmute: () => { isMuted = false; playMusic(); saveAudioPreferences(); }, // Alias for compatibility
     getMuteState: getMuteState,
     getVolumes: getVolumes,
+    getVolume: () => masterVolume, // Alias for compatibility - returns master volume
     
     // Cleanup
     cleanup: cleanupAudio

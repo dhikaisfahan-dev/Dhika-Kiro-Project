@@ -1,6 +1,9 @@
 // ============================================================================
 // TETRIS GAME - Core Game Logic
 // ============================================================================
+// VERSION: 2026-02-12-v3 - Added comprehensive error handling and logging
+
+console.log('[game.js] VERSION 2026-02-12-v3 - Starting to load game.js...');
 
 // ============================================================================
 // GAME CONSTANTS
@@ -338,32 +341,48 @@ function updateGhostPiece() {
 
 // Initialize game
 function initGame() {
-    initializeBoard();
-    gameState.nextPieces = [];
-    gameState.nextPieces.push(...generatePieceBag());
-    gameState.score = 0;
-    gameState.level = 1;
-    gameState.lines = 0;
-    gameState.combo = 0;
-    gameState.backToBack = false;
-    gameState.holdPiece = null;
-    gameState.canHold = true;
-    gameState.activePowerups = [];
-    gameState.isPlaying = false;
-    gameState.isPaused = false;
-    gameState.isGameOver = false;
-    gameState.timer = 0;
-    gameState.achievementsProgress = {
-        tetrises: 0,
-        maxCombo: 0,
-        tSpins: 0,
-        powerupsUsed: new Set(),
-        playTime: 0
-    };
-    
-    // Set fall speed based on difficulty
-    const diffSettings = DIFFICULTY_SETTINGS[gameState.difficulty];
-    gameState.fallSpeed = diffSettings.initialSpeed;
+    try {
+        console.log('[game.js] initGame ENTRY');
+        
+        initializeBoard();
+        console.log('[game.js] ✓ Board initialized');
+        
+        gameState.nextPieces = [];
+        gameState.nextPieces.push(...generatePieceBag());
+        console.log('[game.js] ✓ Next pieces generated:', gameState.nextPieces.length);
+        
+        gameState.score = 0;
+        gameState.level = 1;
+        gameState.lines = 0;
+        gameState.combo = 0;
+        gameState.backToBack = false;
+        gameState.holdPiece = null;
+        gameState.canHold = true;
+        gameState.activePowerups = [];
+        gameState.isPlaying = false;
+        gameState.isPaused = false;
+        gameState.isGameOver = false;
+        gameState.timer = 0;
+        gameState.achievementsProgress = {
+            tetrises: 0,
+            maxCombo: 0,
+            tSpins: 0,
+            powerupsUsed: new Set(),
+            playTime: 0
+        };
+        console.log('[game.js] ✓ Game state reset');
+        
+        // Set fall speed based on difficulty
+        const diffSettings = DIFFICULTY_SETTINGS[gameState.difficulty];
+        gameState.fallSpeed = diffSettings.initialSpeed;
+        console.log('[game.js] ✓ Fall speed set:', gameState.fallSpeed);
+        
+        console.log('[game.js] initGame COMPLETE');
+    } catch (error) {
+        console.error('[game.js] ERROR in initGame:', error.message);
+        console.error('[game.js] Stack:', error.stack);
+        throw error;
+    }
 }
 
 function gameOver() {
@@ -371,8 +390,8 @@ function gameOver() {
     gameState.isPlaying = false;
     
     // Save score to leaderboard
-    if (typeof saveScore === 'function') {
-        saveScore({
+    if (window.storageSystem && typeof window.storageSystem.saveScore === 'function') {
+        window.storageSystem.saveScore({
             name: gameState.playerName,
             score: gameState.score,
             mode: gameState.mode,
@@ -383,8 +402,8 @@ function gameOver() {
     }
     
     // Show game over screen
-    if (typeof showGameOverScreen === 'function') {
-        showGameOverScreen();
+    if (window.showGameOverScreen && typeof window.showGameOverScreen === 'function') {
+        window.showGameOverScreen();
     }
 }
 
@@ -401,8 +420,8 @@ function movePieceLeft() {
         updateGhostPiece();
         
         // Play move sound
-        if (typeof playSound === 'function') {
-            playSound('move');
+        if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+            window.audioSystem.playSound('move');
         }
         
         return true;
@@ -419,8 +438,8 @@ function movePieceRight() {
         updateGhostPiece();
         
         // Play move sound
-        if (typeof playSound === 'function') {
-            playSound('move');
+        if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+            window.audioSystem.playSound('move');
         }
         
         return true;
@@ -478,8 +497,8 @@ function hardDrop() {
     lockPiece();
     
     // Play drop sound
-    if (typeof playSound === 'function') {
-        playSound('drop');
+    if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+        window.audioSystem.playSound('drop');
     }
 }
 
@@ -507,8 +526,8 @@ function rotatePieceClockwise() {
             updateGhostPiece();
             
             // Play rotate sound
-            if (typeof playSound === 'function') {
-                playSound('rotate');
+            if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+                window.audioSystem.playSound('rotate');
             }
             
             return true;
@@ -542,8 +561,8 @@ function rotatePieceCounterClockwise() {
             updateGhostPiece();
             
             // Play rotate sound
-            if (typeof playSound === 'function') {
-                playSound('rotate');
+            if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+                window.audioSystem.playSound('rotate');
             }
             
             return true;
@@ -616,8 +635,8 @@ function lockPiece() {
     }
     
     // Play placement sound
-    if (typeof playSound === 'function') {
-        playSound('place');
+    if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+        window.audioSystem.playSound('place');
     }
 }
 
@@ -649,8 +668,8 @@ function clearLines() {
     }
     
     // Trigger line clear animation
-    if (typeof triggerLineClearAnimation === 'function') {
-        triggerLineClearAnimation(linesToClear);
+    if (typeof window.triggerLineClearAnimation === 'function') {
+        window.triggerLineClearAnimation(linesToClear);
     }
     
     // Remove cleared lines
@@ -670,17 +689,17 @@ function clearLines() {
         updateFallSpeed();
         
         // Play level up sound
-        if (typeof playSound === 'function') {
-            playSound('levelup');
+        if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+            window.audioSystem.playSound('levelup');
         }
     }
     
     // Play clear sound
-    if (typeof playSound === 'function') {
+    if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
         if (linesToClear.length === 4) {
-            playSound('tetris');
+            window.audioSystem.playSound('tetris');
         } else {
-            playSound('clear');
+            window.audioSystem.playSound('clear');
         }
     }
     
@@ -1020,13 +1039,13 @@ function activatePowerup(type) {
     gameState.achievementsProgress.powerupsUsed.add(type);
     
     // Play power-up sound
-    if (typeof playSound === 'function') {
-        playSound('powerup');
+    if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+        window.audioSystem.playSound('powerup');
     }
     
     // Show notification
-    if (typeof showNotification === 'function') {
-        showNotification(`Power-up: ${POWERUP_TYPES[type].name}`, 'powerup');
+    if (window.showNotification && typeof window.showNotification === 'function') {
+        window.showNotification(`Power-up: ${POWERUP_TYPES[type].name}`, 'powerup');
     }
     
     switch (type) {
@@ -1138,8 +1157,8 @@ function updatePowerups(deltaTime) {
                 gameState.fallSpeed = powerup.originalSpeed;
                 gameState.activePowerups.splice(i, 1);
                 
-                if (typeof showNotification === 'function') {
-                    showNotification('Slow Time ended', 'info');
+                if (window.showNotification && typeof window.showNotification === 'function') {
+                    window.showNotification('Slow Time ended', 'info');
                 }
             }
         }
@@ -1159,9 +1178,9 @@ function applyBombEffect(x, y) {
         }
     }
     
-    // Trigger particle effect
-    if (typeof triggerParticleEffect === 'function') {
-        triggerParticleEffect(x, y, 'bomb');
+    // Trigger particle effect for bomb
+    if (typeof window.triggerPowerUpParticles === 'function') {
+        window.triggerPowerUpParticles(x, y, '#FF6B6B');
     }
     
     // Remove bomb power-up
@@ -1177,8 +1196,8 @@ function useGhostModeCharge() {
         if (ghostPowerup.counter <= 0) {
             gameState.activePowerups = gameState.activePowerups.filter(p => p.type !== 'ghost');
             
-            if (typeof showNotification === 'function') {
-                showNotification('Ghost Mode ended', 'info');
+            if (window.showNotification && typeof window.showNotification === 'function') {
+                window.showNotification('Ghost Mode ended', 'info');
             }
         }
     }
@@ -1269,18 +1288,18 @@ function unlockAchievement(achievement) {
     saveAchievements();
     
     // Show notification
-    if (typeof showNotification === 'function') {
-        showNotification(`Achievement Unlocked: ${achievement.name}`, 'achievement');
+    if (window.showNotification && typeof window.showNotification === 'function') {
+        window.showNotification(`Achievement Unlocked: ${achievement.name}`, 'achievement');
     }
     
     // Play achievement sound
-    if (typeof playSound === 'function') {
-        playSound('achievement');
+    if (window.audioSystem && typeof window.audioSystem.playSound === 'function') {
+        window.audioSystem.playSound('achievement');
     }
     
-    // Trigger particle effect
-    if (typeof triggerParticleEffect === 'function') {
-        triggerParticleEffect(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, 'achievement');
+    // Trigger particle effect for achievement
+    if (typeof window.triggerAchievementParticles === 'function') {
+        window.triggerAchievementParticles();
     }
 }
 
@@ -1474,47 +1493,31 @@ function processInput(action) {
     // Validate and execute action
     switch (action) {
         case 'moveLeft':
-            if (canMove(-1, 0)) {
-                movePiece(-1, 0);
-                if (window.audioSystem) {
-                    window.audioSystem.playMove();
-                }
-            }
+            movePieceLeft();
             break;
             
         case 'moveRight':
-            if (canMove(1, 0)) {
-                movePiece(1, 0);
-                if (window.audioSystem) {
-                    window.audioSystem.playMove();
-                }
-            }
+            movePieceRight();
             break;
             
         case 'softDrop':
-            if (canMove(0, 1)) {
-                movePiece(0, 1);
-                gameState.score += 1; // Soft drop bonus
-                if (window.audioSystem) {
-                    window.audioSystem.playMove();
-                }
-            }
+            softDrop();
             break;
             
         case 'hardDrop':
-            executeHardDrop();
+            hardDrop();
             break;
             
         case 'rotateClockwise':
-            rotatePiece(1);
+            rotatePieceClockwise();
             break;
             
         case 'rotateCounterClockwise':
-            rotatePiece(-1);
+            rotatePieceCounterClockwise();
             break;
             
         case 'hold':
-            executeHold();
+            holdCurrentPiece();
             break;
     }
     
@@ -1551,14 +1554,7 @@ function canMove(dx, dy) {
         return false;
     }
     
-    const newX = gameState.currentX + dx;
-    const newY = gameState.currentY + dy;
-    
-    return !checkCollision(
-        gameState.currentPiece.shape,
-        newX,
-        newY
-    );
+    return isValidPosition(gameState.currentPiece, dx, dy);
 }
 
 // Clear input state (useful when switching screens)
@@ -1737,12 +1733,15 @@ function shareScoreNative(score, playerName, mode, difficulty) {
 // Show notification message
 function showNotification(message, type = 'info') {
     // This will be implemented in ui.js
-    if (typeof displayNotification === 'function') {
-        displayNotification(message, type);
+    if (window.displayNotification && typeof window.displayNotification === 'function') {
+        window.displayNotification(message, type);
     } else {
         console.log(`[${type}] ${message}`);
     }
 }
+
+// Export notification function
+window.showNotification = showNotification;
 
 // Export multiplayer functions
 window.generateScoreCode = generateScoreCode;
@@ -1803,6 +1802,11 @@ function initializeGame() {
         window.audioSystem.init();
     }
     
+    // Initialize renderer
+    if (window.renderer && typeof window.renderer.initialize === 'function') {
+        window.renderer.initialize();
+    }
+    
     // Initialize input handling
     initializeInput();
     
@@ -1817,57 +1821,98 @@ function initializeGame() {
 
 // Start a new game
 function startNewGame(playerName, difficulty, mode) {
-    // Save player preferences
-    gameState.playerName = playerName || 'Player';
-    gameState.difficulty = difficulty || 'medium';
-    gameState.mode = mode || 'marathon';
-    
-    // Save preferences to storage
-    if (window.storageSystem) {
-        window.storageSystem.savePlayerName(playerName);
-        window.storageSystem.saveDifficulty(difficulty);
-        window.storageSystem.saveLastMode(mode);
-    }
-    
-    // Initialize game state
-    initGame();
-    
-    // Set fall speed based on difficulty
-    const diffSettings = DIFFICULTY_SETTINGS[gameState.difficulty];
-    gameState.fallSpeed = diffSettings.initialSpeed;
-    
-    // Spawn first piece
-    if (!spawnNewPiece()) {
-        console.error('Failed to spawn first piece');
+    try {
+        console.log('[game.js] ========================================');
+        console.log('[game.js] startNewGame ENTRY - Version 2026-02-12-v3');
+        console.log('[game.js] Parameters:', { playerName, difficulty, mode });
+        console.log('[game.js] ========================================');
+        
+        // Save player preferences
+        gameState.playerName = playerName || 'Player';
+        gameState.difficulty = difficulty || 'medium';
+        gameState.mode = mode || 'marathon';
+        console.log('[game.js] ✓ Player preferences set');
+        
+        // Save preferences to storage
+        if (window.storageSystem) {
+            window.storageSystem.savePlayerName(playerName);
+            window.storageSystem.saveDifficulty(difficulty);
+            window.storageSystem.saveLastMode(mode);
+            console.log('[game.js] ✓ Preferences saved to storage');
+        }
+        
+        // Initialize game state
+        console.log('[game.js] Calling initGame...');
+        initGame();
+        console.log('[game.js] ✓ initGame complete');
+        
+        // Initialize renderer
+        console.log('[game.js] Initializing renderer...');
+        if (window.renderer && typeof window.renderer.initialize === 'function') {
+            const rendererSuccess = window.renderer.initialize();
+            console.log('[game.js] Renderer initialization result:', rendererSuccess);
+        } else {
+            console.error('[game.js] ✗ Renderer not available');
+        }
+        
+        // Set fall speed based on difficulty
+        const diffSettings = DIFFICULTY_SETTINGS[gameState.difficulty];
+        gameState.fallSpeed = diffSettings.initialSpeed;
+        console.log('[game.js] ✓ Fall speed set:', gameState.fallSpeed);
+        
+        // Spawn first piece
+        console.log('[game.js] Spawning first piece...');
+        if (!spawnNewPiece()) {
+            console.error('[game.js] ✗ Failed to spawn first piece');
+            return false;
+        }
+        console.log('[game.js] ✓ First piece spawned successfully');
+        
+        // Set game as playing
+        gameState.isPlaying = true;
+        gameState.isPaused = false;
+        gameState.isGameOver = false;
+        gameState.lastMoveTime = Date.now();
+        console.log('[game.js] ✓ Game state set to playing');
+        
+        // Show game screen
+        console.log('[game.js] Showing game screen...');
+        if (window.showScreen && typeof window.showScreen === 'function') {
+            window.showScreen('gameScreen');
+            console.log('[game.js] ✓ Game screen shown');
+        } else {
+            console.error('[game.js] ✗ showScreen function not available');
+        }
+        
+        // Start background music
+        if (window.audioSystem && typeof window.audioSystem.playMusic === 'function') {
+            window.audioSystem.playMusic();
+            console.log('[game.js] ✓ Background music started');
+        }
+        
+        // Update UI with friend challenge if active
+        if (window.updateGameUIWithChallenge && typeof window.updateGameUIWithChallenge === 'function') {
+            window.updateGameUIWithChallenge();
+        }
+        
+        // Start game loop
+        console.log('[game.js] Starting game loop...');
+        requestAnimationFrame(gameLoop);
+        console.log('[game.js] ========================================');
+        console.log('[game.js] startNewGame COMPLETE - SUCCESS');
+        console.log('[game.js] ========================================');
+        
+        return true;
+    } catch (error) {
+        console.error('[game.js] ========================================');
+        console.error('[game.js] FATAL ERROR in startNewGame:');
+        console.error('[game.js] Error message:', error.message);
+        console.error('[game.js] Error stack:', error.stack);
+        console.error('[game.js] ========================================');
         return false;
     }
-    
-    // Set game as playing
-    gameState.isPlaying = true;
-    gameState.isPaused = false;
-    gameState.isGameOver = false;
-    gameState.lastMoveTime = Date.now();
-    
-    // Show game screen
-    if (window.showScreen && typeof window.showScreen === 'function') {
-        window.showScreen('game');
-    }
-    
-    // Start background music
-    if (window.audioSystem && typeof window.audioSystem.playMusic === 'function') {
-        window.audioSystem.playMusic();
-    }
-    
-    // Update UI with friend challenge if active
-    if (window.updateGameUIWithChallenge && typeof window.updateGameUIWithChallenge === 'function') {
-        window.updateGameUIWithChallenge();
-    }
-    
-    // Start game loop
-    requestAnimationFrame(gameLoop);
-    
-    return true;
 }
+console.log('startNewGame function defined:', typeof startNewGame);
 
 // Resume saved game
 function resumeSavedGame() {
@@ -1918,7 +1963,7 @@ function resumeSavedGame() {
     
     // Show game screen
     if (window.showScreen && typeof window.showScreen === 'function') {
-        window.showScreen('game');
+        window.showScreen('gameScreen');
     }
     
     // Start background music
@@ -1940,7 +1985,16 @@ function resumeSavedGame() {
 // Main game loop
 let lastFrameTime = 0;
 
+let gameLoopCount = 0;
 function gameLoop(timestamp) {
+    gameLoopCount++;
+    if (gameLoopCount === 1) {
+        console.log('[game.js] Game loop started - first frame');
+    }
+    if (gameLoopCount % 60 === 0) {
+        console.log('[game.js] Game loop running - frame', gameLoopCount);
+    }
+    
     // Calculate delta time
     const deltaTime = timestamp - lastFrameTime;
     lastFrameTime = timestamp;
@@ -1965,6 +2019,10 @@ function gameLoop(timestamp) {
         // Render frame
         if (window.renderer && typeof window.renderer.renderWithEffects === 'function') {
             window.renderer.renderWithEffects(timestamp);
+        } else {
+            if (gameLoopCount === 1) {
+                console.error('[game.js] renderer.renderWithEffects not available');
+            }
         }
         
         // Update UI
@@ -1981,6 +2039,10 @@ function gameLoop(timestamp) {
     // Continue game loop if still playing
     if (gameState.isPlaying && !gameState.isGameOver) {
         requestAnimationFrame(gameLoop);
+    } else {
+        if (gameLoopCount === 1) {
+            console.error('[game.js] Game loop stopped - isPlaying:', gameState.isPlaying, 'isGameOver:', gameState.isGameOver);
+        }
     }
 }
 
@@ -2060,7 +2122,6 @@ function handleResumeGame() {
     }
     
     // Restart game loop
-    lastFrameTime = performance.now();
     requestAnimationFrame(gameLoop);
 }
 
@@ -2123,7 +2184,16 @@ function stopGame() {
     clearInputState();
 }
 
-// Export game control functions to window
+// ============================================================================
+// EXPORT FUNCTIONS TO WINDOW (IMMEDIATELY - AT END OF FILE)
+// ============================================================================
+console.log('[game.js] Reached export section - about to export functions...');
+// Export functions immediately so they're available when ui.js loads
+console.log('About to export - startNewGame type:', typeof startNewGame);
+window.gameState = gameState;
+window.BOARD_WIDTH = BOARD_WIDTH;
+window.BOARD_HEIGHT = BOARD_HEIGHT;
+window.BLOCK_SIZE = BLOCK_SIZE;
 window.initializeGame = initializeGame;
 window.startNewGame = startNewGame;
 window.resumeSavedGame = resumeSavedGame;
@@ -2134,11 +2204,25 @@ window.handleResumeGame = handleResumeGame;
 window.handleGameOver = handleGameOver;
 window.stopGame = stopGame;
 window.saveGameState = saveGameState;
-window.gameState = gameState;
+console.log('After export - window.startNewGame type:', typeof window.startNewGame);
 
-// Initialize game when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeGame);
-} else {
-    initializeGame();
+// Set a flag to indicate game.js is fully loaded
+window.gameJsLoaded = true;
+console.log('game.js fully loaded and exported');
+
+// ============================================================================
+// INITIALIZE GAME
+// ============================================================================
+// Initialize game when DOM is ready (wrapped in try-catch to prevent blocking exports)
+try {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeGame);
+    } else {
+        initializeGame();
+    }
+} catch (error) {
+    console.error('Error during game initialization:', error);
+    // Don't let initialization errors prevent the game from being playable
 }
+
+console.log('game.js loaded - startNewGame available:', typeof window.startNewGame);

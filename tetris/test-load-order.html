@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Script Load Order</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            background: #000;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+    </style>
+</head>
+<body>
+    <h1>Script Load Order Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toISOString()}] ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        log('Starting script loading test...', 'info');
+        
+        const cacheBuster = Date.now();
+        const scripts = [
+            './storage.js',
+            './audio.js',
+            './theme.js',
+            './renderer.js',
+            './game.js',
+            './ui.js'
+        ];
+        
+        let loadedCount = 0;
+        
+        function loadScriptSequentially(index) {
+            if (index >= scripts.length) {
+                log('✓ All scripts loaded successfully', 'success');
+                
+                // Check what's available on window
+                setTimeout(() => {
+                    log('--- Checking window object ---', 'info');
+                    log(`window.gameJsLoaded: ${window.gameJsLoaded}`, window.gameJsLoaded ? 'success' : 'error');
+                    log(`window.startNewGame: ${typeof window.startNewGame}`, typeof window.startNewGame === 'function' ? 'success' : 'error');
+                    log(`window.gameState: ${typeof window.gameState}`, typeof window.gameState === 'object' ? 'success' : 'error');
+                    log(`window.initializeGame: ${typeof window.initializeGame}`, typeof window.initializeGame === 'function' ? 'success' : 'error');
+                }, 1000);
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = `${scripts[index]}?t=${cacheBuster}`;
+            
+            script.onload = function() {
+                loadedCount++;
+                log(`✓ [${loadedCount}/${scripts.length}] Loaded: ${scripts[index]}`, 'success');
+                loadScriptSequentially(index + 1);
+            };
+            
+            script.onerror = function() {
+                log(`✗ Failed to load: ${scripts[index]}`, 'error');
+                // Continue anyway to see what else loads
+                loadScriptSequentially(index + 1);
+            };
+            
+            document.body.appendChild(script);
+        }
+        
+        log(`Cache buster: ${cacheBuster}`, 'info');
+        loadScriptSequentially(0);
+    </script>
+</body>
+</html>
