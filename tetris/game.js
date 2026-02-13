@@ -891,32 +891,7 @@ function checkPowerupSpawn() {
 // GAME MODES
 // ============================================================================
 
-function startGame(mode, difficulty, playerName) {
-    gameState.mode = mode;
-    gameState.difficulty = difficulty;
-    gameState.playerName = playerName || 'Player';
-    
-    initGame();
-    
-    gameState.isPlaying = true;
-    gameState.lastMoveTime = Date.now();
-    
-    // Spawn first piece
-    spawnNewPiece();
-    
-    // Mode-specific initialization
-    if (mode === 'sprint') {
-        // Sprint mode: clear 40 lines
-        gameState.targetLines = 40;
-        gameState.timer = 0;
-    } else if (mode === 'ultra') {
-        // Ultra mode: 3 minutes
-        gameState.timer = 180; // 180 seconds
-    } else {
-        // Marathon mode: endless
-        gameState.timer = 0;
-    }
-}
+// NOTE: Old startGame() function removed - use startNewGame() instead (defined later in file)
 
 function updateGameMode(deltaTime) {
     if (!gameState.isPlaying || gameState.isPaused) return;
