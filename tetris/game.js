@@ -1846,6 +1846,22 @@ function startNewGame(playerName, difficulty, mode) {
         initGame();
         console.log('[game.js] ✓ initGame complete');
         
+        // Mode-specific initialization (MUST be after initGame)
+        if (mode === 'sprint') {
+            // Sprint mode: clear 40 lines
+            gameState.targetLines = 40;
+            gameState.timer = 0;
+            console.log('[game.js] ✓ Sprint mode: timer=0, targetLines=40');
+        } else if (mode === 'ultra') {
+            // Ultra mode: 3 minutes
+            gameState.timer = 180; // 180 seconds
+            console.log('[game.js] ✓ Ultra mode: timer=180 seconds');
+        } else {
+            // Marathon mode: endless
+            gameState.timer = 0;
+            console.log('[game.js] ✓ Marathon mode: timer=0');
+        }
+        
         // Initialize renderer
         console.log('[game.js] Initializing renderer...');
         if (window.renderer && typeof window.renderer.initialize === 'function') {
