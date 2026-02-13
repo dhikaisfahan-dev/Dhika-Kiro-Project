@@ -38,6 +38,9 @@ function showScreen(screenId) {
 // Expose showScreen to window for game.js to use
 window.showScreen = showScreen;
 
+// Expose showGameOver to window for game.js to use
+window.showGameOver = showGameOver;
+
 // ============================================================================
 // START SCREEN CONTROLLER
 // ============================================================================

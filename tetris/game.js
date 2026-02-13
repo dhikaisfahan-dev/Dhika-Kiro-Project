@@ -390,20 +390,20 @@ function gameOver() {
     gameState.isPlaying = false;
     
     // Save score to leaderboard
-    if (window.storageSystem && typeof window.storageSystem.saveScore === 'function') {
-        window.storageSystem.saveScore({
-            name: gameState.playerName,
-            score: gameState.score,
-            mode: gameState.mode,
-            difficulty: gameState.difficulty,
-            lines: gameState.lines,
-            level: gameState.level
-        });
+    if (window.storageSystem && typeof window.storageSystem.saveHighScore === 'function') {
+        window.storageSystem.saveHighScore(
+            gameState.score,
+            gameState.playerName,
+            gameState.mode,
+            gameState.difficulty,
+            gameState.lines,
+            gameState.level
+        );
     }
     
     // Show game over screen
-    if (window.showGameOverScreen && typeof window.showGameOverScreen === 'function') {
-        window.showGameOverScreen();
+    if (window.showGameOver && typeof window.showGameOver === 'function') {
+        window.showGameOver(gameState.score, gameState.lines, gameState.level, gameState.mode, gameState.difficulty);
     }
 }
 
@@ -925,24 +925,23 @@ function completeGame() {
     gameState.isGameOver = true;
     
     // Save score
-    if (typeof saveScore === 'function') {
-        saveScore({
-            name: gameState.playerName,
-            score: gameState.score,
-            mode: gameState.mode,
-            difficulty: gameState.difficulty,
-            lines: gameState.lines,
-            level: gameState.level,
-            time: gameState.timer
-        });
+    if (window.storageSystem && typeof window.storageSystem.saveHighScore === 'function') {
+        window.storageSystem.saveHighScore(
+            gameState.score,
+            gameState.playerName,
+            gameState.mode,
+            gameState.difficulty,
+            gameState.lines,
+            gameState.level
+        );
     }
     
     // Check achievements
     checkAchievements();
     
     // Show game over screen
-    if (typeof showGameOverScreen === 'function') {
-        showGameOverScreen();
+    if (window.showGameOver && typeof window.showGameOver === 'function') {
+        window.showGameOver(gameState.score, gameState.lines, gameState.level, gameState.mode, gameState.difficulty);
     }
 }
 
@@ -2132,16 +2131,15 @@ function handleGameOver() {
     }
     
     // Save final score
-    if (window.storageSystem && typeof window.storageSystem.saveScore === 'function') {
-        window.storageSystem.saveScore({
-            name: gameState.playerName,
-            score: gameState.score,
-            mode: gameState.mode,
-            difficulty: gameState.difficulty,
-            lines: gameState.lines,
-            level: gameState.level,
-            time: gameState.timer
-        });
+    if (window.storageSystem && typeof window.storageSystem.saveHighScore === 'function') {
+        window.storageSystem.saveHighScore(
+            gameState.score,
+            gameState.playerName,
+            gameState.mode,
+            gameState.difficulty,
+            gameState.lines,
+            gameState.level
+        );
     }
     
     // Clear saved game
@@ -2153,8 +2151,8 @@ function handleGameOver() {
     checkAchievements();
     
     // Show game over screen
-    if (window.showGameOverScreen && typeof window.showGameOverScreen === 'function') {
-        window.showGameOverScreen();
+    if (window.showGameOver && typeof window.showGameOver === 'function') {
+        window.showGameOver(gameState.score, gameState.lines, gameState.level, gameState.mode, gameState.difficulty);
     }
 }
 

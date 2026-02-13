@@ -1030,3 +1030,12 @@ Game is ready for testing. All controls should now respond correctly."
 **Status**: Successfully committed and pushed to GitHub
 
 ---
+
+
+## Fix Leaderboard Function Name Mismatch
+**Timestamp**: 2026-02-13T00:00:00Z
+**User Input**: "and the leaderboard also not workingeiifccvjlfjrkvheetjhnrtvnffgefrnhtjjcnijcgcr"
+**AI Response**: Fixed leaderboard by correcting function name mismatch in game.js
+**Context**: User reported leaderboard not working. Found that game.js was calling window.storageSystem.saveScore() but storage.js has saveHighScore() function. Fixed all 3 occurrences in game.js (lines ~394, ~929, ~2136) by changing saveScore to saveHighScore with correct parameters: saveHighScore(score, playerName, mode, difficulty, lines, level)
+
+---
