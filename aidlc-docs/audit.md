@@ -1017,3 +1017,16 @@ Game is ready for testing. All controls should now respond correctly."
 - Commit and push fix to GitHub
 
 ---
+
+
+## Update Game Title to "Tetris by Arkan"
+**Timestamp**: 2026-02-13T10:45:00Z
+**User Request**: "please change the tetris name in the game display become tetris by arkan"
+**Changes Made**:
+- Updated browser tab title from "Tetris - Modern Web Game" to "Tetris by Arkan - Modern Web Game"
+- Updated main heading from "TETRIS" to "TETRIS BY ARKAN"
+**Files Modified**: tetris/index.html
+**Commit**: 0fc7206 - "Update game title to 'Tetris by Arkan'"
+**Status**: Successfully committed and pushed to GitHub
+
+---
